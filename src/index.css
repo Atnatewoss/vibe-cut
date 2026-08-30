@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-hovered: var(--hovered);
+  --color-active: var(--active);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-bright: var(--bright);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-destructive: var(--destructive);
+  --font-sans: 'Geist', 'Inter', system-ui, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', 'SFMono-Regular', ui-monospace, Consolas, monospace;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Base surfaces — cool neutral grays inspired by Cursor / VS Code */
+  --bg: #0e0e12;
+  --surface: #141418;
+  --raised: #1a1a20;
+  --hovered: #222228;
+  --active: #2a2a32;
+
+  /* Borders */
+  --line: #202026;
+  --line-strong: #2e2e36;
+
+  /* Text hierarchy */
+  --fg: #d4d7de;
+  --muted: #959baa;
+  --faint: #5c6274;
+  --bright: #eff0f4;
+
+  /* Accent — cool blue, not warm orange */
+  --accent: #6c9eeb;
+  --accent-strong: #8cb8ff;
+  --accent-soft: rgba(108, 158, 235, 0.12);
+
+  --destructive: #e06060;
+
+  --radius-md: 6px;
+  --radius-lg: 9px;
+}
+
+/* Selection highlight */
+::selection { background: rgba(108, 158, 235, 0.25); color: #fff; }
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, textarea, input { font: inherit; }
+button { cursor: pointer; }
+
+/* Scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 10%) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 10%); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 18%); background-clip: content-box; border: 2px solid transparent; }
+*::-webkit-scrollbar-corner { background: transparent; }
+
+/* Animations */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.anim-in { animation: rise-in 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Timeline grid — removed for clean look */
+.timeline-grid {
+  background: transparent;
+}
+
+.timeline-drop-active { box-shadow: inset 0 0 0 1px var(--accent); }
+
+/* Transport bar play button — no orange, clean neutral */
+.transport-play {
+  background: var(--fg);
+  color: var(--bg);
+}
+.transport-play:hover {
+  background: var(--bright);
+}
+.transport-play.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+.transport-play.active:hover {
+  background: var(--accent-strong);
+}
