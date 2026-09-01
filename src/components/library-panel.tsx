@@ -27,6 +27,7 @@ interface LibraryPanelProps {
   onFilesImported: (files: ImportedMedia[]) => void
   onAddClip: (clip: Clip) => void
   onProxyReady: (fileName: string, proxyUrl: string) => void
+  onWaveformReady: (fileName: string, waveform?: number[]) => void
 }
 
 const TITLES: Record<SidebarView, string> = {
@@ -74,6 +75,7 @@ export function LibraryPanel({
   onFilesImported,
   onAddClip,
   onProxyReady,
+  onWaveformReady,
 }: LibraryPanelProps) {
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
@@ -110,14 +112,20 @@ export function LibraryPanel({
       if (files.length === 0) return
       const imported = await Promise.all(
         files.map((f) =>
-          importFile(f, (proxyUrl) => {
-            onProxyReady(f.name, proxyUrl)
-          }),
+          importFile(
+            f,
+            (proxyUrl) => {
+              onProxyReady(f.name, proxyUrl)
+            },
+            (waveform) => {
+              onWaveformReady(f.name, waveform)
+            },
+          ),
         ),
       )
       onFilesImported(imported)
     },
-    [isDuplicate, onFilesImported, onProxyReady],
+    [isDuplicate, onFilesImported, onProxyReady, onWaveformReady],
   )
 
   const q = query.toLowerCase()

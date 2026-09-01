@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Player, type PlayerRef } from '@remotion/player'
-import { Pause, Play, SkipBack } from 'lucide-react'
+import { Download, Pause, Play, SkipBack } from 'lucide-react'
 
+import { exportMediaToBlob, saveBlob } from '@/lib/export'
 import { formatDuration } from '@/lib/media-store'
 import type { ImportedMedia } from '@/lib/media-store'
 import { COMP_HEIGHT, COMP_WIDTH, FPS, compositionDurationSec, timeToFrame, type Clip } from '@/lib/types'
@@ -42,6 +43,27 @@ export function Preview({
 
   const durationSec = compositionDurationSec(clips)
   const durationInFrames = Math.max(1, timeToFrame(durationSec))
+
+  const [exporting, setExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState(0)
+
+  const handleExport = useCallback(async () => {
+    if (exporting) return
+    setExporting(true)
+    setExportProgress(0)
+    try {
+      const blob = await exportMediaToBlob({
+        clips,
+        media,
+        onProgress: (p) => setExportProgress(p.progress ?? 0),
+      })
+      await saveBlob(blob)
+    } catch (err) {
+      console.warn('Export failed:', err)
+    } finally {
+      setExporting(false)
+    }
+  }, [clips, media, exporting])
 
   useEffect(() => {
     const player = playerRef.current
@@ -109,8 +131,18 @@ export function Preview({
           {playing ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" />}
         </button>
         <span className="w-28 text-center font-mono text-[11px] text-[#888]">
-          {formatDuration(currentTime)} / {formatDuration(durationSec)}
+          {exporting ? `export ${Math.round(exportProgress * 100)}%` : `${formatDuration(currentTime)} / ${formatDuration(durationSec)}`}
         </span>
+        <button
+          type="button"
+          aria-label="Export video"
+          disabled={exporting}
+          onClick={handleExport}
+          className="transport-export grid size-7 place-items-center rounded-md hover:bg-[#1e1e28] hover:text-[#ccc] disabled:opacity-40"
+          title="Export to file"
+        >
+          <Download size={13} />
+        </button>
       </div>
     </section>
   )

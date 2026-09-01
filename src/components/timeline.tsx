@@ -545,13 +545,13 @@ export function Timeline({
                   {/* Waveform visualization for audio clips */}
                   {isAudio && (
                     <div className="absolute inset-0 flex items-center px-1">
-                      {Array.from({ length: Math.max(20, Math.floor(widthPct * 2)) }).map((_, wi) => (
+                      {waveformBars(media?.waveform, Math.max(20, Math.floor(widthPct * 2))).map((h, wi) => (
                         <div
                           key={wi}
                           className="mx-px rounded-full bg-white/20"
                           style={{
                             width: 2,
-                            height: `${8 + Math.sin(wi * 0.4) * 12 + Math.cos(wi * 0.8) * 8}px`,
+                            height: `${h}px`,
                             flexShrink: 0,
                           }}
                         />
@@ -609,6 +609,22 @@ function parseDuration(dur: string): number {
   if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0)
   if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0)
   return 5
+}
+
+/**
+ * Bar heights for the audio waveform. Uses real amplitude buckets when
+ * available, falling back to a synthetic sine curve otherwise.
+ */
+function waveformBars(waveform: number[] | undefined, count: number): number[] {
+  if (waveform && waveform.length > 0) {
+    const bars: number[] = []
+    for (let i = 0; i < count; i++) {
+      const amp = Math.max(0, Math.min(1, (waveform[Math.floor((i / count) * waveform.length)] ?? 0) * 1.5))
+      bars.push(4 + Math.round(amp * 22))
+    }
+    return bars
+  }
+  return Array.from({ length: count }, (_, wi) => 8 + Math.sin(wi * 0.4) * 12 + Math.cos(wi * 0.8) * 8)
 }
 
 function generateRulerMarks(maxSec: number) {
