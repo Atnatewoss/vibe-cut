@@ -76,6 +76,7 @@ export function LibraryPanel({
   onProxyReady,
 }: LibraryPanelProps) {
   const [query, setQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState('All')
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [expanded, setExpanded] = useState({ video: true, image: true, audio: true })
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -229,8 +230,38 @@ export function LibraryPanel({
           </>
         )}
 
+        {view === 'effects' && (
+          <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+            {['All', 'Shaders', 'Transitions', 'Filters'].map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setActiveFilter(filter)}
+                className={cn(
+                  "whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-medium transition-colors",
+                  activeFilter === filter
+                    ? "bg-[#6c9eeb] text-[#111116]"
+                    : "bg-[#1e1e28] text-[#888] hover:bg-[#2a2a35] hover:text-[#ccc]"
+                )}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        )}
+        
         {view === 'effects' &&
-          EFFECTS.filter((e) => !q || e.name.toLowerCase().includes(q)).map((effect) => (
+          EFFECTS.filter((e) => !q || e.name.toLowerCase().includes(q))
+            .filter((e) => {
+              if (activeFilter === 'All') return true;
+              const n = e.name.toLowerCase();
+              if (activeFilter === 'Shaders') return n.includes('shader');
+              if (activeFilter === 'Transitions') return n.includes('dissolve') || n.includes('fade');
+              if (activeFilter === 'Filters') return !n.includes('shader') && !n.includes('dissolve') && !n.includes('fade');
+              return true;
+            })
+            .slice(0, 100)
+            .map((effect) => (
             <AssetRow
               key={effect.id}
               icon={<Wand2 size={12} className="text-[#f59e0b]" />}
@@ -285,7 +316,9 @@ export function LibraryPanel({
                 }
               />
             ))}
-            {AUDIO_BEDS.filter((a) => !q || a.name.toLowerCase().includes(q)).map((audio) => (
+            {AUDIO_BEDS.filter((a) => !q || a.name.toLowerCase().includes(q))
+              .slice(0, 100)
+              .map((audio) => (
               <AssetRow
                 key={audio.id}
                 icon={<Music size={12} className="text-[#888]" />}
@@ -313,7 +346,9 @@ export function LibraryPanel({
         )}
 
         {view === 'templates' &&
-          TEMPLATES.filter((t) => !q || t.name.toLowerCase().includes(q)).map((template) => (
+          TEMPLATES.filter((t) => !q || t.name.toLowerCase().includes(q))
+            .slice(0, 100)
+            .map((template) => (
             <AssetRow
               key={template.id}
               icon={<LayoutTemplate size={12} className="text-[#6c9eeb]" />}
@@ -376,7 +411,7 @@ export function LibraryPanel({
                 }
               />
             ))}
-            {searchGraphics.map((g) => (
+            {searchGraphics.slice(0, 100).map((g) => (
               <AssetRow
                 key={g.id}
                 icon={g.kind === 'effect' ? <Wand2 size={12} /> : <LayoutTemplate size={12} />}
