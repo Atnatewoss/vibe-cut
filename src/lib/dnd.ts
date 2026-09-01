@@ -19,6 +19,8 @@ export type DndPayload = {
   duration?: string
   /** If this drag came from an imported file, this links to ImportedMedia.id */
   fileId?: string
+  templateId?: string
+  effectId?: string
 }
 
 /**
