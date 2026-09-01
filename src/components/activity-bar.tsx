@@ -26,35 +26,34 @@ const BOTTOM_ITEMS: { id: SidebarView; Icon: typeof Search; tip: string }[] = [
 
 interface ActivityBarProps {
   active: SidebarView
-  counts?: Partial<Record<SidebarView, number>>
+  open: boolean
   onSelect: (id: SidebarView) => void
 }
 
-export function ActivityBar({ active, counts, onSelect }: ActivityBarProps) {
+export function ActivityBar({ active, open, onSelect }: ActivityBarProps) {
   return (
     <nav
-      className="flex w-12 shrink-0 flex-col items-center border-r border-[#1e1e28] bg-[#0c0c10] py-1.5"
+      className="flex w-12 shrink-0 flex-col items-center border-r border-[#1e1e28] bg-[#0c0c10] pt-1"
       aria-label="Activity bar"
     >
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex flex-col items-center">
         {TOP_ITEMS.map(({ id, Icon, tip }) => (
           <ActivityIcon
             key={id}
             Icon={Icon}
             tip={tip}
-            badge={counts?.[id]}
-            active={active === id}
+            active={open && active === id}
             onClick={() => onSelect(id)}
           />
         ))}
       </div>
-      <div className="mt-auto flex flex-col items-center gap-0.5 pb-1">
+      <div className="mt-auto flex flex-col items-center pb-1">
         {BOTTOM_ITEMS.map(({ id, Icon, tip }) => (
           <ActivityIcon
             key={id}
             Icon={Icon}
             tip={tip}
-            active={active === id}
+            active={open && active === id}
             onClick={() => onSelect(id)}
           />
         ))}
@@ -66,13 +65,11 @@ export function ActivityBar({ active, counts, onSelect }: ActivityBarProps) {
 function ActivityIcon({
   Icon,
   tip,
-  badge,
   active,
   onClick,
 }: {
   Icon: typeof Clapperboard
   tip: string
-  badge?: number
   active: boolean
   onClick: () => void
 }) {
@@ -83,19 +80,14 @@ function ActivityIcon({
       title={tip}
       onClick={onClick}
       className={cn(
-        'group relative flex size-10 items-center justify-center rounded-md transition-colors',
-        active ? 'text-[#e8e8ee]' : 'text-[#555] hover:bg-[#16161e] hover:text-[#aaa]',
+        'relative flex size-12 items-center justify-center transition-colors',
+        active ? 'text-[#e8e8ee]' : 'text-[#555] hover:text-[#aaa]',
       )}
     >
-      {active && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-[#6c9eeb]" />}
-      <span className="relative">
-        <Icon size={20} strokeWidth={active ? 1.7 : 1.45} />
-        {badge != null && badge > 0 && (
-          <span className="absolute -right-2.5 -top-1.5 min-w-[14px] rounded-full bg-[#1e1e28] px-[4px] text-center font-mono text-[8px] leading-[13px] text-[#888]">
-            {badge}
-          </span>
-        )}
-      </span>
+      {active && (
+        <span className="absolute left-0 top-1/2 h-6 w-[2px] -translate-y-1/2 rounded-r-full bg-[#ccc]" />
+      )}
+      <Icon size={22} strokeWidth={active ? 1.7 : 1.5} />
     </button>
   )
 }

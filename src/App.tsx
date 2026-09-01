@@ -7,6 +7,7 @@ import { Preview } from '@/components/preview'
 import { Timeline } from '@/components/timeline'
 import { AgentPanel } from '@/components/agent-panel'
 import { TopBar } from '@/components/top-bar'
+import { StatusBar } from '@/components/status-bar'
 import type { Clip } from '@/lib/types'
 import { compositionDurationSec, FPS } from '@/lib/types'
 import type { ImportedMedia } from '@/lib/media-store'
@@ -17,6 +18,7 @@ export type { Clip }
 
 export default function App() {
   const [sidebarView, setSidebarView] = useState<SidebarView>('media')
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [agentOpen, setAgentOpen] = useState(true)
   const [playing, setPlaying] = useState(false)
   const [clips, setClips] = useState<Clip[]>([])
@@ -133,40 +135,42 @@ export default function App() {
     <main className="flex h-screen min-h-[620px] flex-col overflow-hidden bg-[#0c0c10] text-[#999]">
       <TopBar
         projectName="launch-film"
-        playing={playing}
-        zoom={zoom}
-        onZoom={setZoom}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((v) => !v)}
         agentOpen={agentOpen}
         onToggleAgent={() => setAgentOpen((v) => !v)}
-        clipCount={clips.length}
-        durationLabel={formatDuration(durationSec)}
       />
 
       <div className="flex min-h-0 flex-1">
         <ActivityBar
           active={sidebarView}
-          onSelect={setSidebarView}
-          counts={{
-            media: importedFiles.filter((f) => f.kind !== 'audio').length,
-            audio: importedFiles.filter((f) => f.kind === 'audio').length,
+          open={sidebarOpen}
+          onSelect={(id) => {
+            if (sidebarOpen && sidebarView === id) setSidebarOpen(false)
+            else {
+              setSidebarView(id)
+              setSidebarOpen(true)
+            }
           }}
         />
-        <LibraryPanel
-          view={sidebarView}
-          importedFiles={importedFiles}
-          onFilesImported={handleImportFiles}
-          onAddClip={handleClipAdded}
-          onProxyReady={(fileName, proxyUrl) => {
-            setImportedFiles((prev) =>
-              prev.map((f) => (f.name === fileName ? { ...f, proxyReady: true, playbackUrl: proxyUrl } : f)),
-            )
-          }}
-          onWaveformReady={(fileName, waveform) => {
-            setImportedFiles((prev) =>
-              prev.map((f) => (f.name === fileName && waveform ? { ...f, waveform } : f)),
-            )
-          }}
-        />
+        {sidebarOpen && (
+          <LibraryPanel
+            view={sidebarView}
+            importedFiles={importedFiles}
+            onFilesImported={handleImportFiles}
+            onAddClip={handleClipAdded}
+            onProxyReady={(fileName, proxyUrl) => {
+              setImportedFiles((prev) =>
+                prev.map((f) => (f.name === fileName ? { ...f, proxyReady: true, playbackUrl: proxyUrl } : f)),
+              )
+            }}
+            onWaveformReady={(fileName, waveform) => {
+              setImportedFiles((prev) =>
+                prev.map((f) => (f.name === fileName && waveform ? { ...f, waveform } : f)),
+              )
+            }}
+          />
+        )}
 
         <div className="flex min-w-0 flex-1 flex-col bg-[#0c0c10]">
           <Preview
@@ -215,6 +219,13 @@ export default function App() {
           />
         )}
       </div>
+
+      <StatusBar
+        composition="1920×1080 · 30fps"
+        clipCount={clips.length}
+        durationLabel={formatDuration(durationSec)}
+        playing={playing}
+      />
     </main>
   )
 }

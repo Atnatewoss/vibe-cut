@@ -90,59 +90,71 @@ export function Preview({
 
   return (
     <section className="flex min-h-0 flex-1 flex-col bg-[#0c0c10]">
-      <div className="relative min-h-0 flex-1 p-3">
-        <div className="absolute inset-3 overflow-hidden rounded-md border border-[#1e1e28] bg-[#07070a]">
-          <Player
-            ref={playerRef}
-            component={ProjectComposition}
-            inputProps={{ clips, media }}
-            durationInFrames={durationInFrames}
-            compositionWidth={COMP_WIDTH}
-            compositionHeight={COMP_HEIGHT}
-            fps={FPS}
-            acknowledgeRemotionLicense
-            style={{ width: '100%', height: '100%' }}
-            controls={false}
-            autoPlay={false}
-            loop={false}
-            clickToPlay={false}
-            numberOfSharedAudioTags={4}
-          />
+      <div className="flex h-[35px] shrink-0 items-center justify-between border-b border-[#1e1e28] bg-[#111116] px-2">
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            aria-label="Go to start"
+            onClick={() => {
+              playerRef.current?.seekTo(0)
+              onTimeUpdate(0)
+            }}
+            className="vc-icon"
+          >
+            <SkipBack size={13} />
+          </button>
+          <button
+            type="button"
+            aria-label={playing ? 'Pause' : 'Play'}
+            onClick={onTogglePlay}
+            className="vc-icon"
+          >
+            {playing ? <Pause size={13} fill="currentColor" /> : <Play size={13} fill="currentColor" />}
+          </button>
+          <span className="ml-1 w-[92px] font-mono text-[11px] tabular-nums text-[#888]">
+            {formatDuration(currentTime)} / {formatDuration(durationSec)}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          {exporting && (
+            <span className="font-mono text-[10px] text-[#666]">
+              Export {Math.round(exportProgress * 100)}%
+            </span>
+          )}
+          <button
+            type="button"
+            aria-label="Export video"
+            disabled={exporting}
+            onClick={handleExport}
+            className="vc-icon"
+            title="Export"
+          >
+            <Download size={13} />
+          </button>
         </div>
       </div>
 
-      <div className="flex h-10 shrink-0 items-center justify-center gap-3 border-t border-[#1e1e28] bg-[#111116] text-[#666]">
-        <button
-          type="button"
-          aria-label="Go to start"
-          onClick={() => {
-            playerRef.current?.seekTo(0)
-            onTimeUpdate(0)
-          }}
-          className="grid size-7 place-items-center rounded-md hover:bg-[#1e1e28] hover:text-[#ccc]"
-        >
-          <SkipBack size={13} />
-        </button>
-        <button
-          aria-label={playing ? 'Pause' : 'Play'}
-          onClick={onTogglePlay}
-          className={`transport-play grid size-8 place-items-center rounded-md ${playing ? 'active' : ''}`}
-        >
-          {playing ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" />}
-        </button>
-        <span className="w-28 text-center font-mono text-[11px] text-[#888]">
-          {exporting ? `export ${Math.round(exportProgress * 100)}%` : `${formatDuration(currentTime)} / ${formatDuration(durationSec)}`}
-        </span>
-        <button
-          type="button"
-          aria-label="Export video"
-          disabled={exporting}
-          onClick={handleExport}
-          className="transport-export grid size-7 place-items-center rounded-md hover:bg-[#1e1e28] hover:text-[#ccc] disabled:opacity-40"
-          title="Export to file"
-        >
-          <Download size={13} />
-        </button>
+      <div className="relative min-h-0 flex-1 bg-[#07070a]">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="h-full max-h-full aspect-video overflow-hidden bg-[#050508]">
+            <Player
+              ref={playerRef}
+              component={ProjectComposition}
+              inputProps={{ clips, media }}
+              durationInFrames={durationInFrames}
+              compositionWidth={COMP_WIDTH}
+              compositionHeight={COMP_HEIGHT}
+              fps={FPS}
+              acknowledgeRemotionLicense
+              style={{ width: '100%', height: '100%' }}
+              controls={false}
+              autoPlay={false}
+              loop={false}
+              clickToPlay={false}
+              numberOfSharedAudioTags={4}
+            />
+          </div>
+        </div>
       </div>
     </section>
   )
