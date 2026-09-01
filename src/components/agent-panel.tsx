@@ -636,7 +636,7 @@ export function AgentPanel({
       )}
 
       {/* Tab bar */}
-      <div className="flex h-[34px] shrink-0 items-stretch border-b border-[#1e1e28]">
+      <div className="flex h-[35px] shrink-0 items-stretch border-b border-[#1e1e28]">
         <div className="flex min-w-0 flex-1 items-stretch">
           <div className="flex min-w-0 items-center gap-2 border-r border-[#1e1e28] bg-[#16161e] px-3">
             <MessageSquare size={12} className="shrink-0 text-[#666]" />

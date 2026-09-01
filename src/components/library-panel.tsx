@@ -138,9 +138,9 @@ export function LibraryPanel({
   )
 
   return (
-    <aside className="flex w-[260px] shrink-0 flex-col border-r border-[#1e1e28] bg-[#111116]">
-      <div className="flex h-[34px] shrink-0 items-center justify-between border-b border-[#1e1e28] px-3">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#888]">{TITLES[view]}</span>
+    <aside className="flex w-[240px] shrink-0 flex-col border-r border-[#1e1e28] bg-[#111116]">
+      <div className="flex h-[35px] shrink-0 items-center justify-between border-b border-[#1e1e28] px-2">
+        <span className="text-[11px] font-medium text-[#888]">{TITLES[view]}</span>
         {(view === 'media' || view === 'audio') && (
           <button
             type="button"
@@ -154,8 +154,8 @@ export function LibraryPanel({
       </div>
 
       {view !== 'files' && view !== 'settings' && (
-        <div className="border-b border-[#1e1e28] px-2.5 py-2">
-          <label className="flex h-7 items-center gap-1.5 rounded-md border border-[#2a2a35] bg-[#0c0c10] px-2">
+        <div className="border-b border-[#1e1e28] px-2 py-1.5">
+          <label className="flex h-7 items-center gap-1.5 rounded-md bg-[#0c0c10] px-2 ring-1 ring-[#2a2a35] focus-within:ring-[#444]">
             <Search size={12} className="shrink-0 text-[#444]" />
             <input
               value={query}
@@ -184,24 +184,22 @@ export function LibraryPanel({
       >
         {view === 'media' && (
           <>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                'mb-3 w-full rounded-lg border border-dashed px-3 py-4 text-center transition-colors',
-                isDraggingOver
-                  ? 'border-[#6c9eeb] bg-[#6c9eeb]/8'
-                  : 'border-[#2a2a35] hover:border-[#3a3a48] hover:bg-[#16161e]',
-              )}
-            >
-              <Upload size={16} className="mx-auto mb-1.5 text-[#555]" />
-              <div className="text-[11px] text-[#888]">Drop files or click to import</div>
-              <div className="mt-0.5 text-[10px] text-[#555]">Video, image, audio</div>
-            </button>
+            {importedFiles.length === 0 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  'mb-2 w-full rounded-md px-2 py-6 text-center text-[12px] text-[#555] transition-colors hover:bg-[#16161e] hover:text-[#888]',
+                  isDraggingOver && 'bg-[#6c9eeb]/10 text-[#6c9eeb]',
+                )}
+              >
+                Drop files here or click to import
+              </button>
+            )}
 
             <MediaGroup
               title={`Videos (${videos.length})`}
-              icon={<FileVideo size={11} className="text-[#6c9eeb]" />}
+              icon={<FileVideo size={11} className="text-[#666]" />}
               open={expanded.video}
               onToggle={() => setExpanded((s) => ({ ...s, video: !s.video }))}
             >
@@ -212,7 +210,7 @@ export function LibraryPanel({
 
             <MediaGroup
               title={`Images (${images.length})`}
-              icon={<FileImage size={11} className="text-[#34d399]" />}
+              icon={<FileImage size={11} className="text-[#666]" />}
               open={expanded.image}
               onToggle={() => setExpanded((s) => ({ ...s, image: !s.image }))}
             >
@@ -223,7 +221,7 @@ export function LibraryPanel({
 
             <MediaGroup
               title={`Imported audio (${audios.length})`}
-              icon={<FileAudio size={11} className="text-[#a78bfa]" />}
+              icon={<FileAudio size={11} className="text-[#666]" />}
               open={expanded.audio}
               onToggle={() => setExpanded((s) => ({ ...s, audio: !s.audio }))}
             >
@@ -231,25 +229,21 @@ export function LibraryPanel({
                 <ImportedThumb key={file.id} file={file} onDragStart={handleDragStart} onDoubleClick={addClip} />
               ))}
             </MediaGroup>
-
-            {importedFiles.length === 0 && (
-              <p className="px-1 pt-4 text-center text-[11px] text-[#444]">Import a logo and a few clips to start</p>
-            )}
           </>
         )}
 
         {view === 'effects' && (
-          <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-            {['All', 'Shaders', 'Transitions', 'Filters'].map((filter) => (
+          <div className="mb-1 flex gap-0.5 px-0.5">
+            {['All', 'Transitions', 'Filters'].map((filter) => (
               <button
                 key={filter}
                 type="button"
                 onClick={() => setActiveFilter(filter)}
                 className={cn(
-                  "whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-medium transition-colors",
+                  'rounded px-2 py-0.5 text-[11px] transition-colors',
                   activeFilter === filter
-                    ? "bg-[#6c9eeb] text-[#111116]"
-                    : "bg-[#1e1e28] text-[#888] hover:bg-[#2a2a35] hover:text-[#ccc]"
+                    ? 'bg-[#1e1e28] text-[#ccc]'
+                    : 'text-[#666] hover:text-[#ccc]',
                 )}
               >
                 {filter}
@@ -263,16 +257,15 @@ export function LibraryPanel({
             .filter((e) => {
               if (activeFilter === 'All') return true;
               const n = e.name.toLowerCase();
-              if (activeFilter === 'Shaders') return n.includes('shader');
               if (activeFilter === 'Transitions') return n.includes('dissolve') || n.includes('fade');
-              if (activeFilter === 'Filters') return !n.includes('shader') && !n.includes('dissolve') && !n.includes('fade');
+              if (activeFilter === 'Filters') return !n.includes('dissolve') && !n.includes('fade');
               return true;
             })
             .slice(0, 100)
             .map((effect) => (
             <AssetRow
               key={effect.id}
-              icon={<Wand2 size={12} className="text-[#f59e0b]" />}
+              icon={<Wand2 size={12} className="text-[#666]" />}
               name={effect.name}
               meta={effect.description}
               onDragStart={(e) =>
@@ -301,7 +294,7 @@ export function LibraryPanel({
             {audios.map((file) => (
               <AssetRow
                 key={file.id}
-                icon={<Music size={12} className="text-[#a78bfa]" />}
+                icon={<Music size={12} className="text-[#666]" />}
                 name={file.name}
                 meta={file.duration ? formatDuration(file.duration) : 'audio'}
                 onDragStart={(e) =>
@@ -359,7 +352,7 @@ export function LibraryPanel({
             .map((template) => (
             <AssetRow
               key={template.id}
-              icon={<LayoutTemplate size={12} className="text-[#6c9eeb]" />}
+              icon={<LayoutTemplate size={12} className="text-[#666]" />}
               name={template.name}
               meta={`${formatDuration(template.duration)} · ${template.description}`}
               onDragStart={(e) =>
@@ -512,17 +505,17 @@ function MediaGroup({
   if (items.filter(Boolean).length === 0) return null
 
   return (
-    <div className="mb-3">
+    <div className="mb-2">
       <button
         type="button"
         onClick={onToggle}
-        className="mb-1.5 flex w-full items-center gap-1.5 px-0.5 text-[10px] font-medium uppercase tracking-[0.06em] text-[#666] hover:text-[#999]"
+        className="mb-1 flex w-full items-center gap-1 px-0.5 text-[11px] text-[#666] hover:text-[#ccc]"
       >
         {open ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
         {icon}
         {title}
       </button>
-      {open && <div className="grid grid-cols-2 gap-1.5">{children}</div>}
+      {open && <div className="grid grid-cols-2 gap-1">{children}</div>}
     </div>
   )
 }
@@ -551,7 +544,7 @@ function ImportedThumb({
       onDragStart={(e) => onDragStart(e, payload)}
       onDragEnd={clearPayload}
       onDoubleClick={() => onDoubleClick(payload)}
-      className="group relative aspect-video overflow-hidden rounded-md border border-[#2a2a35] bg-[#16161e] text-left hover:border-[#3a3a48]"
+      className="group relative aspect-video overflow-hidden rounded-sm border border-[#1e1e28] bg-[#16161e] text-left hover:border-[#2a2a35]"
     >
       {file.thumbnail ? (
         <img src={file.thumbnail} alt="" className="h-full w-full object-cover" />
@@ -586,14 +579,14 @@ function AssetRow({
       onDragStart={onDragStart}
       onDragEnd={clearPayload}
       onDoubleClick={onDoubleClick}
-      className="mb-0.5 flex cursor-grab items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-[#16161e] active:cursor-grabbing"
+      className="mb-px flex cursor-grab items-center gap-2 rounded px-1 py-1 hover:bg-[#16161e] active:cursor-grabbing"
     >
-      <div className="grid size-7 shrink-0 place-items-center rounded border border-[#2a2a35] bg-[#16161e] text-[#888]">
+      <div className="grid size-6 shrink-0 place-items-center text-[#666]">
         {icon}
       </div>
       <div className="min-w-0">
-        <div className="truncate text-[12px] text-[#ccc]">{name}</div>
-        <div className="truncate text-[10px] text-[#555]">{meta}</div>
+        <div className="truncate text-[12px] leading-tight text-[#ccc]">{name}</div>
+        <div className="truncate text-[10px] leading-tight text-[#555]">{meta}</div>
       </div>
     </div>
   )
@@ -601,7 +594,7 @@ function AssetRow({
 
 function TreeRow({ depth, label, open }: { depth: number; label: string; open?: boolean }) {
   return (
-    <div className="flex items-center gap-1 py-0.5 text-[#888]" style={{ paddingLeft: 8 + depth * 12 }}>
+    <div className="flex h-[22px] items-center gap-1 text-[12px] text-[#888] hover:bg-[#16161e]" style={{ paddingLeft: 8 + depth * 12 }}>
       {open != null ? <ChevronDown size={10} className="text-[#444]" /> : <span className="w-2.5" />}
       <span className="truncate">{label}</span>
     </div>

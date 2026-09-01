@@ -10,9 +10,9 @@ import type { ImportedMedia } from '@/lib/media-store'
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const LANE_H = 56
-const HEADER_W = 100
-const RULER_H = 28
+const LANE_H = 36
+const HEADER_W = 84
+const RULER_H = 22
 const MIN_TRACKS = 7
 const SNAP_THRESHOLD = 8
 
@@ -336,59 +336,58 @@ export function Timeline({
   return (
     <section
       className={`flex shrink-0 flex-col border-t border-[#1e1e28] bg-[#111116] transition-shadow ${over ? 'timeline-drop-active' : ''}`}
-      style={{ height: '45%', minHeight: 200 }}
+      style={{ height: '38%', minHeight: 180 }}
       onDragOver={(e) => { e.preventDefault(); if (!over) setOver(true) }}
       onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(false) }}
       onDrop={onDrop}
     >
       {/* Toolbar */}
-      <div className="flex h-8 shrink-0 items-center justify-between border-b border-[#1e1e28] px-3 text-[11px] text-[#888]">
+      <div className="flex h-[35px] shrink-0 items-center justify-between border-b border-[#1e1e28] px-2 text-[11px] text-[#888]">
         <span className="flex items-center gap-2">
-          <span className="font-medium text-[11px] text-[#ccc]">Timeline</span>
-          <span className="font-mono text-[9.5px] text-[#555]">launch-film</span>
+          <span className="text-[11px] text-[#ccc]">Timeline</span>
           {totalDuration > 0 && (
-            <span className="font-mono text-[9.5px] text-faint">
-              · {formatDuration(totalDuration)} total
+            <span className="font-mono text-[10px] text-[#555]">
+              {formatDuration(totalDuration)}
             </span>
           )}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={() => addTrack('video')}
-            className="grid size-6 place-items-center rounded text-faint hover:bg-hovered hover:text-fg"
-            title="Add video track"
+            className="vc-icon"
+            title="Add track"
           >
-            <Plus size={12} strokeWidth={1.8} />
+            <Plus size={13} strokeWidth={1.8} />
           </button>
           <button
             onClick={onClipSplit}
-            className="grid size-6 place-items-center rounded text-faint hover:bg-hovered hover:text-fg"
-            title="Split at playhead (Ctrl+S)"
+            className="vc-icon"
+            title="Split at playhead"
           >
-            <Scissors size={12} strokeWidth={1.8} />
+            <Scissors size={13} strokeWidth={1.8} />
           </button>
           <button
             onClick={onClipDelete}
-            className="grid size-6 place-items-center rounded text-faint hover:bg-hovered hover:text-fg"
-            title="Delete selected (Del)"
+            className="vc-icon"
+            title="Delete selected"
           >
-            <Trash2 size={12} strokeWidth={1.8} />
+            <Trash2 size={13} strokeWidth={1.8} />
           </button>
-          <div className="ml-1 h-3 w-px bg-line-strong" />
+          <span className="mx-1 h-3 w-px bg-[#2a2a35]" />
           <button
             onClick={() => onZoom(Math.max(0.25, zoom - 0.25))}
-            className="grid size-6 place-items-center rounded text-faint hover:bg-hovered hover:text-fg"
+            className="vc-icon"
             title="Zoom out"
           >
-            <ZoomOut size={12} strokeWidth={1.8} />
+            <ZoomOut size={13} strokeWidth={1.8} />
           </button>
-          <span className="font-mono text-[10px] text-faint w-8 text-center">{Math.round(zoom * 100)}%</span>
+          <span className="w-8 text-center font-mono text-[10px] text-[#666]">{Math.round(zoom * 100)}%</span>
           <button
             onClick={() => onZoom(Math.min(4, zoom + 0.25))}
-            className="grid size-6 place-items-center rounded text-faint hover:bg-hovered hover:text-fg"
+            className="vc-icon"
             title="Zoom in"
           >
-            <ZoomIn size={12} strokeWidth={1.8} />
+            <ZoomIn size={13} strokeWidth={1.8} />
           </button>
         </div>
       </div>
@@ -407,41 +406,41 @@ export function Timeline({
               display: none;
             }
           `}</style>
-          <div className="flex items-center justify-center border-b border-[#1e1e28] sticky top-0 z-40 bg-[#0c0c10]" style={{ height: RULER_H }}>
-            <span className="text-[8px] uppercase tracking-wider text-faint/50">Tracks</span>
+          <div className="sticky top-0 z-40 flex items-center justify-center border-b border-[#1e1e28] bg-[#0c0c10]" style={{ height: RULER_H }}>
+            <span className="text-[10px] text-[#444]">Tracks</span>
           </div>
           {expandedTracks.map((track) => (
             <div
               key={track.id}
-              className="flex items-center justify-between border-b border-line px-2"
+              className="flex items-center justify-between border-b border-[#1e1e28] px-1.5"
               style={{ height: LANE_H }}
             >
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 {track.type === 'video' ? (
-                  <Film size={10} className="text-[#4a9eff]" />
+                  <Film size={10} className="text-[#6c9eeb]" />
                 ) : (
-                  <Music size={10} className="text-[#4cd964]" />
+                  <Music size={10} className="text-[#888]" />
                 )}
-                <span className="font-mono text-[10px] text-muted">{track.label}</span>
+                <span className="font-mono text-[10px] text-[#888]">{track.label}</span>
               </div>
-              <div className="flex gap-0.5">
+              <div className="flex">
                 <button
                   onClick={() => toggleMute(track.id)}
-                  className={`text-[8px] px-1 py-0.5 rounded font-mono ${track.muted ? 'bg-[#ff453a]/20 text-[#ff453a]' : 'text-faint hover:text-muted'}`}
+                  className={`px-1 font-mono text-[9px] ${track.muted ? 'text-[#ccc]' : 'text-[#444] hover:text-[#888]'}`}
                   title="Mute"
                 >
                   M
                 </button>
                 <button
                   onClick={() => toggleSolo(track.id)}
-                  className={`text-[8px] px-1 py-0.5 rounded font-mono ${track.solo ? 'bg-[#ffd60a]/20 text-[#ffd60a]' : 'text-faint hover:text-muted'}`}
+                  className={`px-1 font-mono text-[9px] ${track.solo ? 'text-[#ccc]' : 'text-[#444] hover:text-[#888]'}`}
                   title="Solo"
                 >
                   S
                 </button>
                 <button
                   onClick={() => toggleLock(track.id)}
-                  className={`text-[8px] px-1 py-0.5 rounded font-mono ${track.locked ? 'bg-[#ff9f0a]/20 text-[#ff9f0a]' : 'text-faint hover:text-muted'}`}
+                  className={`px-1 font-mono text-[9px] ${track.locked ? 'text-[#ccc]' : 'text-[#444] hover:text-[#888]'}`}
                   title="Lock"
                 >
                   L
@@ -469,7 +468,7 @@ export function Timeline({
                 className="absolute top-0 h-full border-r border-line/20"
                 style={{ left: `${mark.pct}%` }}
               >
-                <span className="absolute bottom-0.5 left-0.5 font-mono text-[7.5px] text-faint/60">
+                <span className="absolute bottom-0.5 left-0.5 font-mono text-[9px] text-[#555]">
                   {mark.label}
                 </span>
                 <div className="absolute bottom-0 left-0 h-1 w-px bg-faint/25" />
@@ -489,10 +488,10 @@ export function Timeline({
               ref={playheadRef}
             >
               <div
-                className="absolute -top-[3px] -left-[5px] h-0 w-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#ff453a] cursor-col-resize"
+                className="absolute -top-[3px] -left-[4px] h-0 w-0 cursor-col-resize border-l-[4px] border-r-[4px] border-t-[5px] border-l-transparent border-r-transparent border-t-[#6c9eeb]"
                 onMouseDown={handlePlayheadMouseDown}
               />
-              <div className={`h-full w-px bg-[#ff453a]/80 ${isDraggingPlayhead ? 'bg-[#ff453a]' : ''}`} />
+              <div className={`h-full w-px ${isDraggingPlayhead ? 'bg-[#6c9eeb]' : 'bg-[#6c9eeb]/80'}`} />
             </div>
 
             {/* Lane separators */}
@@ -521,12 +520,12 @@ export function Timeline({
                     onSelectClip(isActive ? null : i)
                   }}
                   onMouseDown={(e) => handleClipMouseDown(e, clip.id, false, false)}
-                  className={`absolute flex items-center overflow-hidden rounded-[3px] border font-mono text-[10px] cursor-grab active:cursor-grabbing transition-shadow ${isActive ? 'ring-1 ring-[#0a84ff]/60 z-20' : ''}`}
+                  className={`absolute flex cursor-grab items-center overflow-hidden rounded-sm border font-mono text-[10px] active:cursor-grabbing ${isActive ? 'z-20 border-[#6c9eeb]' : 'border-[#2a2a35]'}`}
                   style={{
-                    top: 4 + clip.lane * LANE_H + 4,
+                    top: 3 + clip.lane * LANE_H,
                     left: `${leftPct}%`,
                     width: `${Math.max(widthPct, 4)}%`,
-                    height: LANE_H - 12,
+                    height: LANE_H - 6,
                     ...clipStyle(clip.tone, isVideo),
                   }}
                 >
@@ -588,8 +587,8 @@ export function Timeline({
 
             {/* Empty state */}
             {clips.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center text-[11px] text-faint/40">
-                Drop media from the library to start building
+              <div className="absolute inset-0 flex items-center justify-center text-[12px] text-[#444]">
+                Drop media from the sidebar
               </div>
             )}
           </div>
@@ -639,43 +638,34 @@ function generateRulerMarks(maxSec: number) {
   return marks
 }
 
-/** DaVinci Resolve-inspired clip colors */
+/** Muted IDE clip colors — same family as the agent accent */
 function clipStyle(tone: Clip['tone'], hasMedia: boolean) {
   if (tone === 'video') {
     return {
-      background: hasMedia
-        ? 'linear-gradient(180deg, rgba(30, 64, 110, 0.95) 0%, rgba(20, 45, 80, 0.95) 100%)'
-        : 'linear-gradient(180deg, #1e406e 0%, #142d50 100%)',
-      borderColor: hasMedia ? '#2a5a8a' : '#1e406e',
-      color: '#ffffff',
+      background: hasMedia ? '#1a2740' : '#161d2c',
+      color: '#c8d4e8',
     }
   }
   if (tone === 'audio') {
     return {
-      background: hasMedia
-        ? 'linear-gradient(180deg, rgba(30, 90, 50, 0.95) 0%, rgba(20, 70, 35, 0.95) 100%)'
-        : 'linear-gradient(180deg, #1e5a32 0%, #144623 100%)',
-      borderColor: hasMedia ? '#2a8a4a' : '#1e5a32',
-      color: '#ffffff',
+      background: hasMedia ? '#1a2430' : '#151c24',
+      color: '#b7c4d4',
     }
   }
   if (tone === 'effect') {
     return {
-      background: 'linear-gradient(180deg, #6b21a8 0%, #581c87 100%)',
-      borderColor: '#7c3aed',
-      color: '#ffffff',
+      background: '#1e1a2c',
+      color: '#c8c0d8',
     }
   }
   if (tone === 'image') {
     return {
-      background: 'linear-gradient(180deg, #0e7490 0%, #155e75 100%)',
-      borderColor: '#06b6d4',
-      color: '#ffffff',
+      background: '#18242c',
+      color: '#c0d0d8',
     }
   }
   return {
-    background: 'linear-gradient(180deg, #9a3412 0%, #7c2d12 100%)',
-    borderColor: '#ea580c',
-    color: '#ffffff',
+    background: '#241c18',
+    color: '#d4c8c0',
   }
 }
