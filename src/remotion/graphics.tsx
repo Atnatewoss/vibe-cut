@@ -314,3 +314,76 @@ export function AudioBed({ label }: { label: string }) {
     </AbsoluteFill>
   )
 }
+
+export function MeshGradientShader() {
+  const frame = useCurrentFrame()
+  const { durationInFrames } = useVideoConfig()
+
+  const x1 = interpolate(Math.sin(frame / 30), [-1, 1], [0, 100])
+  const y1 = interpolate(Math.cos(frame / 40), [-1, 1], [0, 100])
+  
+  const x2 = interpolate(Math.sin(frame / 20 + 2), [-1, 1], [10, 90])
+  const y2 = interpolate(Math.cos(frame / 25 + 1), [-1, 1], [10, 90])
+
+  const x3 = interpolate(Math.sin(frame / 35 + 4), [-1, 1], [20, 80])
+  const y3 = interpolate(Math.cos(frame / 45 + 3), [-1, 1], [20, 80])
+
+  const fadeOut = interpolate(frame, [durationInFrames - 10, durationInFrames], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  })
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#09090b', overflow: 'hidden', opacity: fadeOut }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: `${y1}%`,
+          left: `${x1}%`,
+          width: '80%',
+          height: '80%',
+          background: 'rgba(108, 158, 235, 0.4)', // Blue
+          borderRadius: '50%',
+          filter: 'blur(100px)',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: `${y2}%`,
+          left: `${x2}%`,
+          width: '70%',
+          height: '70%',
+          background: 'rgba(167, 139, 250, 0.4)', // Purple
+          borderRadius: '50%',
+          filter: 'blur(120px)',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: `${y3}%`,
+          left: `${x3}%`,
+          width: '90%',
+          height: '90%',
+          background: 'rgba(52, 211, 153, 0.3)', // Emerald
+          borderRadius: '50%',
+          filter: 'blur(140px)',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+      
+      {/* Noise overlay for texture */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.15,
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
+        }}
+      />
+    </AbsoluteFill>
+  )
+}
