@@ -13,6 +13,8 @@ export interface ImportedMedia {
   width?: number;
   height?: number;
   proxyReady: boolean; // Proxy generation complete (background, non-blocking)
+  /** Normalized amplitude buckets (0..1) for the timeline waveform, when available */
+  waveform?: number[];
 }
 
 let ffmpegInstance: FFmpeg | null = null;
@@ -150,6 +152,79 @@ function getMediaDuration(file: File): Promise<number | undefined> {
 }
 
 /**
+ * Reduce raw PCM int16 samples to a normalized (0..1) amplitude array
+ * of `buckets` values for waveform rendering.
+ */
+function computeWaveform(pcm: Int16Array, buckets = 120): number[] {
+  const samplesPerBucket = Math.max(1, Math.floor(pcm.length / buckets));
+  const out: number[] = [];
+  for (let b = 0; b < buckets; b++) {
+    const start = b * samplesPerBucket;
+    const end = Math.min(pcm.length, start + samplesPerBucket);
+    if (end <= start) break;
+    let sum = 0;
+    for (let i = start; i < end; i++) {
+      const abs = Math.abs(pcm[i]) / 32768;
+      sum += abs * abs;
+    }
+    out.push(Math.min(1, Math.sqrt(sum / (end - start))));
+  }
+  return out;
+}
+
+/**
+ * Generate a waveform from an audio file by decoding to mono s16le PCM
+ * with ffmpeg.wasm and bucketing normalized amplitude.
+ */
+async function generateAudioWaveform(file: File): Promise<number[] | undefined> {
+  try {
+    const ffmpeg = await getFFmpeg();
+    const inputName = `wf_input_${Date.now()}${getExtension(file.name)}`;
+    const outputName = `wf_output_${Date.now()}.pcm`;
+
+    await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+    await ffmpeg.exec([
+      '-i', inputName,
+      '-ac', '1',
+      '-ar', '8000',
+      '-f', 's16le',
+      '-t', '60',
+      outputName,
+    ]);
+
+    const data = await ffmpeg.readFile(outputName) as Uint8Array;
+
+    // Cleanup
+    await ffmpeg.deleteFile(inputName);
+    await ffmpeg.deleteFile(outputName);
+
+    const byteLen = data.byteLength - (data.byteLength % 2);
+    const pcm = new Int16Array(data.buffer.slice(data.byteOffset, data.byteOffset + byteLen));
+    return computeWaveform(pcm);
+  } catch (err) {
+    console.warn('Waveform generation failed, using placeholder:', err);
+    return undefined;
+  }
+}
+
+/**
+ * Generate waveform in background (non-blocking).
+ * Reports the computed waveform through a callback when ready.
+ */
+async function generateWaveformInBackground(
+  file: File,
+  onWaveformReady: (fileName: string, waveform?: number[]) => void
+): Promise<void> {
+  try {
+    const waveform = await generateAudioWaveform(file);
+    onWaveformReady(file.name, waveform);
+  } catch (err) {
+    console.warn('Waveform background generation failed:', err);
+  }
+}
+
+/**
  * Generate proxy in background (non-blocking).
  * Updates the playbackUrl when ready.
  */
@@ -202,7 +277,8 @@ function getExtension(filename: string): string {
  */
 export async function importFile(
   file: File,
-  onProxyReady?: (proxyUrl: string) => void
+  onProxyReady?: (proxyUrl: string) => void,
+  onWaveformReady?: (waveform?: number[]) => void
 ): Promise<ImportedMedia> {
   const id = `media_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   const objectUrl = URL.createObjectURL(file);
@@ -234,6 +310,13 @@ export async function importFile(
   if (isVideo && onProxyReady) {
     generateProxyInBackground(file, (proxyUrl) => {
       onProxyReady(proxyUrl);
+    });
+  }
+
+  // Generate waveform in background for audio (non-blocking)
+  if (!isVideo && !isImage && onWaveformReady) {
+    generateWaveformInBackground(file, (_fileName, waveform) => {
+      onWaveformReady(waveform);
     });
   }
 

@@ -161,6 +161,11 @@ export default function App() {
               prev.map((f) => (f.name === fileName ? { ...f, proxyReady: true, playbackUrl: proxyUrl } : f)),
             )
           }}
+          onWaveformReady={(fileName, waveform) => {
+            setImportedFiles((prev) =>
+              prev.map((f) => (f.name === fileName && waveform ? { ...f, waveform } : f)),
+            )
+          }}
         />
 
         <div className="flex min-w-0 flex-1 flex-col bg-[#0c0c10]">
