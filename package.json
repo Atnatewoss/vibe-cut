@@ -13,6 +13,7 @@
     "@base-ui/react": "^1.5.0",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
+    "@remotion/player": "^4.0.369",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "class-variance-authority": "^0.7.1",
@@ -20,6 +21,9 @@
     "lucide-react": "^1.16.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "remotion": "^4.0.369",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.3.3"
   },

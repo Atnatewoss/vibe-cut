@@ -1,165 +1,115 @@
-import { useEffect, useRef } from 'react'
-import {
-  FileVideo2,
-  Image as ImageIcon,
-  AudioLines,
-  Play,
-  Square,
-} from 'lucide-react'
+import { useEffect, useMemo } from 'react'
+import { Player, type PlayerRef } from '@remotion/player'
+import { Pause, Play, SkipBack } from 'lucide-react'
 
 import { formatDuration } from '@/lib/media-store'
-import type { Clip } from '@/App'
 import type { ImportedMedia } from '@/lib/media-store'
+import { COMP_HEIGHT, COMP_WIDTH, FPS, compositionDurationSec, timeToFrame, type Clip } from '@/lib/types'
+import { ProjectComposition, type MediaInput } from '@/remotion/ProjectComposition'
 
 interface PreviewProps {
   playing: boolean
-  setPlaying: () => void
-  activeClip: Clip | null
+  onTogglePlay: () => void
+  clips: Clip[]
   importedFiles: ImportedMedia[]
-  videoRef: React.RefObject<HTMLVideoElement | null>
+  playerRef: React.RefObject<PlayerRef | null>
   currentTime: number
-  totalDuration: number
-  onSelectClip: (index: number | null) => void
-}
-
-function resolveMedia(clip: Clip | null, files: ImportedMedia[]): ImportedMedia | null {
-  if (!clip?.fileId) return null
-  return files.find((f) => f.id === clip.fileId) ?? null
+  onTimeUpdate: (time: number) => void
+  onPlayingChange: (playing: boolean) => void
 }
 
 export function Preview({
   playing,
-  setPlaying,
-  activeClip,
+  onTogglePlay,
+  clips,
   importedFiles,
-  videoRef,
+  playerRef,
   currentTime,
-  totalDuration,
+  onTimeUpdate,
+  onPlayingChange,
 }: PreviewProps) {
-  const clip = activeClip
-  const media = resolveMedia(clip, importedFiles)
-  const hasRealVideo = media != null && media.kind === 'video'
-  const hasRealImage = media != null && media.kind === 'image'
-  const hasRealAudio = media != null && media.kind === 'audio'
+  const media: MediaInput[] = useMemo(
+    () =>
+      importedFiles.map((f) => ({
+        id: f.id,
+        name: f.name,
+        kind: f.kind,
+        url: f.playbackUrl || f.objectUrl,
+        mime: f.file.type,
+      })),
+    [importedFiles],
+  )
 
+  const durationSec = compositionDurationSec(clips)
+  const durationInFrames = Math.max(1, timeToFrame(durationSec))
 
-
-  /** Internal ref for the hidden <video> element we control */
-  const localVideoRef = useRef<HTMLVideoElement>(null)
-
-  /** Sync local ref → shared ref so App can control playback */
   useEffect(() => {
-    videoRef.current = localVideoRef.current
-  })
+    const player = playerRef.current
+    if (!player) return
 
-  const ClipIcon =
-    clip?.tone === 'audio'
-      ? AudioLines
-      : clip?.tone === 'image'
-        ? ImageIcon
-        : FileVideo2
+    const onFrame = () => {
+      onTimeUpdate(player.getCurrentFrame() / FPS)
+    }
+    const onPlay = () => onPlayingChange(true)
+    const onPause = () => onPlayingChange(false)
+    const onEnded = () => onPlayingChange(false)
+
+    player.addEventListener('frameupdate', onFrame)
+    player.addEventListener('play', onPlay)
+    player.addEventListener('pause', onPause)
+    player.addEventListener('ended', onEnded)
+    return () => {
+      player.removeEventListener('frameupdate', onFrame)
+      player.removeEventListener('play', onPlay)
+      player.removeEventListener('pause', onPause)
+      player.removeEventListener('ended', onEnded)
+    }
+  }, [onPlayingChange, onTimeUpdate, playerRef, durationInFrames])
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col bg-[#0a0a0f]">
-      {/* Canvas */}
+    <section className="flex min-h-0 flex-1 flex-col bg-[#0c0c10]">
       <div className="relative min-h-0 flex-1 p-3">
-        <div className="absolute inset-3 flex items-center justify-center">
-          <div className="relative aspect-video h-full max-h-full overflow-hidden bg-[#111118]">
-
-            {/* ---- Real video (hidden <video> element for playback control) ---- */}
-            {hasRealVideo && (
-              <>
-                <video
-                  ref={localVideoRef}
-                  key={media.id}
-                  src={media.playbackUrl}
-                  className="absolute inset-0 h-full w-full object-contain"
-                  controls={false}
-                  muted
-                  playsInline
-                />
-
-              </>
-            )}
-
-            {/* ---- Real image ---- */}
-            {hasRealImage && (
-              <img
-                key={media.id}
-                src={media.objectUrl}
-                alt={media.name}
-                className="absolute inset-0 h-full w-full object-contain"
-              />
-            )}
-
-            {/* ---- Audio waveform ---- */}
-            {hasRealAudio && (
-              <>
-                <div className="absolute inset-0 bg-[linear-gradient(160deg,#1a2240,#0a0e20_70%)]" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                  <AudioLines size={40} className="text-accent/30" strokeWidth={1} />
-                  <span className="text-[13px] text-muted">{media.name}</span>
-                  <div className="flex items-end gap-[3px]">
-                    {Array.from({ length: 30 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-[2px] rounded-full bg-accent/40"
-                        style={{ height: `${6 + Math.sin(i * 0.6) * 14 + Math.cos(i * 1.2) * 6}px` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* ---- Built-in asset placeholder (no real file) ---- */}
-            {!media && clip && (
-              <>
-                <div className="absolute inset-0 bg-[#111116]" />
-                <div className="absolute left-5 top-5 font-mono text-[9px] tracking-[0.2em] text-faint">
-                  {clip.tone.toUpperCase()} PREVIEW
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <ClipIcon size={32} className="text-faint/30" strokeWidth={1} />
-                  <span className="text-[13px] text-muted">{clip.label}</span>
-                  <span className="font-mono text-[9px] text-faint/60">
-                    {clip.durationSec ? Math.round(clip.durationSec) + 's' : '—'}
-                  </span>
-                </div>
-              </>
-            )}
-
-            {/* ---- Default empty state ---- */}
-            {!clip && (
-              <>
-                <div className="absolute inset-0 bg-[#111118]" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="text-[11px] text-faint/40">
-                    Drop a clip or talk to the agent
-                  </div>
-                </div>
-              </>
-            )}
-
-          </div>
+        <div className="absolute inset-3 overflow-hidden rounded-md border border-[#1e1e28] bg-[#07070a]">
+          <Player
+            ref={playerRef}
+            component={ProjectComposition}
+            inputProps={{ clips, media }}
+            durationInFrames={durationInFrames}
+            compositionWidth={COMP_WIDTH}
+            compositionHeight={COMP_HEIGHT}
+            fps={FPS}
+            acknowledgeRemotionLicense
+            style={{ width: '100%', height: '100%' }}
+            controls={false}
+            autoPlay={false}
+            loop={false}
+            clickToPlay={false}
+            numberOfSharedAudioTags={4}
+          />
         </div>
       </div>
 
-      {/* Transport bar */}
-      <div className="flex h-10 shrink-0 items-center justify-center gap-4 border-t border-line bg-surface text-faint">
+      <div className="flex h-10 shrink-0 items-center justify-center gap-3 border-t border-[#1e1e28] bg-[#111116] text-[#666]">
         <button
-          aria-label={playing ? 'Pause video' : 'Play video'}
-          onClick={setPlaying}
-          className={`transport-play grid size-8 place-items-center transition-all ${playing ? 'active' : ''}`}
+          type="button"
+          aria-label="Go to start"
+          onClick={() => {
+            playerRef.current?.seekTo(0)
+            onTimeUpdate(0)
+          }}
+          className="grid size-7 place-items-center rounded-md hover:bg-[#1e1e28] hover:text-[#ccc]"
         >
-          {playing ? (
-            <Square size={11} fill="currentColor" />
-          ) : (
-            <Play size={12} fill="currentColor" />
-          )}
+          <SkipBack size={13} />
         </button>
-        <span className="font-mono text-[11px] text-faint">
-          {formatDuration(currentTime)} / {totalDuration > 0 ? formatDuration(totalDuration) : '00:00'}
+        <button
+          aria-label={playing ? 'Pause' : 'Play'}
+          onClick={onTogglePlay}
+          className={`transport-play grid size-8 place-items-center rounded-md ${playing ? 'active' : ''}`}
+        >
+          {playing ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" />}
+        </button>
+        <span className="w-28 text-center font-mono text-[11px] text-[#888]">
+          {formatDuration(currentTime)} / {formatDuration(durationSec)}
         </span>
       </div>
     </section>
