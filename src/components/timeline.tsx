@@ -3,7 +3,7 @@ import { GripVertical, Plus, Scissors, Trash2, ZoomIn, ZoomOut, Film, Music } fr
 
 import { readPayload } from '@/lib/dnd'
 import { formatDuration } from '@/lib/media-store'
-import type { Clip } from '@/App'
+import type { Clip } from '@/lib/types'
 import type { ImportedMedia } from '@/lib/media-store'
 
 /* ------------------------------------------------------------------ */
@@ -13,7 +13,7 @@ import type { ImportedMedia } from '@/lib/media-store'
 const LANE_H = 56
 const HEADER_W = 100
 const RULER_H = 28
-const MIN_TRACKS = 8
+const MIN_TRACKS = 7
 const SNAP_THRESHOLD = 8
 
 /** Total timeline duration in seconds for the ruler. */
@@ -58,6 +58,8 @@ interface TimelineProps {
   currentTime: number
   totalDuration: number
   onSeek: (time: number) => void
+  zoom: number
+  onZoom: (zoom: number) => void
 }
 
 /* ------------------------------------------------------------------ */
@@ -77,10 +79,12 @@ export function Timeline({
   currentTime,
   totalDuration,
   onSeek,
+  zoom,
+  onZoom,
 }: TimelineProps) {
   const [over, setOver] = useState(false)
   const tracksRef = useRef<HTMLDivElement>(null)
-  const [zoom, setZoom] = useState(1)
+  const headersRef = useRef<HTMLDivElement>(null)
   const [dragState, setDragState] = useState<DragState | null>(null)
 
   // Dynamic tracks
@@ -92,7 +96,6 @@ export function Timeline({
     { id: 'a1', label: 'A1', type: 'audio', muted: false, solo: false, locked: false },
     { id: 'a2', label: 'A2', type: 'audio', muted: false, solo: false, locked: false },
     { id: 'a3', label: 'A3', type: 'audio', muted: false, solo: false, locked: false },
-    { id: 'a4', label: 'A4', type: 'audio', muted: false, solo: false, locked: false },
   ])
 
   // Expand tracks if clips exceed current count
@@ -232,6 +235,8 @@ export function Timeline({
       durationSec,
       tone: payload.kind as Clip['tone'],
       fileId: payload.fileId,
+      templateId: payload.templateId,
+      effectId: payload.effectId,
     }
 
     onDropAsset(newClip)
@@ -314,20 +319,33 @@ export function Timeline({
     })
   }, [])
 
+  /* ---- Scroll Sync ---- */
+  const handleTracksScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (headersRef.current) {
+      headersRef.current.scrollTop = e.currentTarget.scrollTop
+    }
+  }, [])
+  
+  const handleHeadersScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (tracksRef.current) {
+      tracksRef.current.scrollTop = e.currentTarget.scrollTop
+    }
+  }, [])
+
   /* ---- Render ---- */
   return (
     <section
-      className={`flex shrink-0 flex-col border-t border-line bg-[#1a1a1f] transition-shadow ${over ? 'timeline-drop-active' : ''}`}
+      className={`flex shrink-0 flex-col border-t border-[#1e1e28] bg-[#111116] transition-shadow ${over ? 'timeline-drop-active' : ''}`}
       style={{ height: '45%', minHeight: 200 }}
       onDragOver={(e) => { e.preventDefault(); if (!over) setOver(true) }}
       onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(false) }}
       onDrop={onDrop}
     >
       {/* Toolbar */}
-      <div className="flex h-8 shrink-0 items-center justify-between border-b border-line px-3 text-[11px] text-muted">
+      <div className="flex h-8 shrink-0 items-center justify-between border-b border-[#1e1e28] px-3 text-[11px] text-[#888]">
         <span className="flex items-center gap-2">
-          <span className="font-medium text-fg text-[11px]">Timeline</span>
-          <span className="font-mono text-[9.5px] text-faint">SCENE 01</span>
+          <span className="font-medium text-[11px] text-[#ccc]">Timeline</span>
+          <span className="font-mono text-[9.5px] text-[#555]">launch-film</span>
           {totalDuration > 0 && (
             <span className="font-mono text-[9.5px] text-faint">
               · {formatDuration(totalDuration)} total
@@ -358,7 +376,7 @@ export function Timeline({
           </button>
           <div className="ml-1 h-3 w-px bg-line-strong" />
           <button
-            onClick={() => setZoom(z => Math.max(0.25, z - 0.25))}
+            onClick={() => onZoom(Math.max(0.25, zoom - 0.25))}
             className="grid size-6 place-items-center rounded text-faint hover:bg-hovered hover:text-fg"
             title="Zoom out"
           >
@@ -366,7 +384,7 @@ export function Timeline({
           </button>
           <span className="font-mono text-[10px] text-faint w-8 text-center">{Math.round(zoom * 100)}%</span>
           <button
-            onClick={() => setZoom(z => Math.min(4, z + 0.25))}
+            onClick={() => onZoom(Math.min(4, zoom + 0.25))}
             className="grid size-6 place-items-center rounded text-faint hover:bg-hovered hover:text-fg"
             title="Zoom in"
           >
@@ -378,8 +396,18 @@ export function Timeline({
       {/* Tracks area */}
       <div className="flex min-h-0 flex-1">
         {/* Lane headers */}
-        <div className="shrink-0 border-r border-line bg-[#141418]" style={{ width: HEADER_W }}>
-          <div className="flex items-center justify-center border-b border-line" style={{ height: RULER_H }}>
+        <div 
+          ref={headersRef}
+          className="shrink-0 border-r border-[#1e1e28] bg-[#0c0c10] overflow-y-auto scrollbar-hide" 
+          style={{ width: HEADER_W, scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onScroll={handleHeadersScroll}
+        >
+          <style>{`
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+          <div className="flex items-center justify-center border-b border-[#1e1e28] sticky top-0 z-40 bg-[#0c0c10]" style={{ height: RULER_H }}>
             <span className="text-[8px] uppercase tracking-wider text-faint/50">Tracks</span>
           </div>
           {expandedTracks.map((track) => (
@@ -424,10 +452,14 @@ export function Timeline({
         </div>
 
         {/* Tracks + Ruler */}
-        <div ref={tracksRef} className="relative min-w-0 flex-1 overflow-x-auto overflow-y-auto">
+        <div 
+          ref={tracksRef} 
+          className="relative min-w-0 flex-1 overflow-x-auto overflow-y-auto"
+          onScroll={handleTracksScroll}
+        >
           {/* Ruler */}
           <div
-            className="sticky top-0 z-20 shrink-0 cursor-pointer border-b border-line bg-[#1a1a1f] select-none"
+            className="sticky top-0 z-20 shrink-0 cursor-pointer border-b border-[#1e1e28] bg-[#111116] select-none"
             style={{ height: RULER_H }}
             onClick={handleRulerClick}
           >
@@ -572,7 +604,9 @@ export function Timeline({
 /* ------------------------------------------------------------------ */
 
 function parseDuration(dur: string): number {
+  if (/^\d+(\.\d+)?$/.test(dur)) return parseFloat(dur)
   const parts = dur.split(':').map(Number)
+  if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0)
   if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0)
   return 5
 }
